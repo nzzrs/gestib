@@ -1,0 +1,52 @@
+name: gestib
+description: "Una aplicación de gestograma para calcular la fecha de parto"
+
+publish_to: 'none'
+
+version: 1.0.0+1
+
+environment:
+  sdk: '>=3.4.0 <4.0.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  # Necesario para localización de widgets Material/Cupertino
+  flutter_localizations:
+    sdk: flutter
+
+  # Para formateo de fechas y localización
+  intl: ^0.19.0
+
+  # Dependencia de calendario (aunque no se use activamente en la UI actual)
+  table_calendar: ^3.0.9
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+
+  # Lints recomendados
+  flutter_lints: ^3.0.0
+
+  # Paquete para generar iconos de la aplicación
+  flutter_launcher_icons: ^0.13.1 # O la versión estable más reciente
+
+flutter:
+  uses-material-design: true
+  # Si tu icono está dentro de una carpeta 'assets' que también usas
+  # para otras imágenes, asegúrate de declararla aquí también:
+  # assets:
+  #   - assets/ # O más específico como assets/icon/
+
+# Configuración para flutter_launcher_icons
+flutter_launcher_icons:
+  android: true   # Generar para Android (puedes usar "launcher_icon" como nombre si prefieres)
+  ios: true       # Generar para iOS
+  # Ruta EXACTA a tu imagen de icono principal
+  image_path: "assets/gestib_icon.png"
+  min_sdk_android: 21 # Requerido para iconos adaptativos si los usaras en el futuro
+  # --- Opcional: Configuración para Iconos Adaptativos (Android 8.0+) ---
+  # Si quieres un icono adaptativo (recomendado), descomenta y ajusta:
+  # adaptive_icon_background: "#FFFFFF"  # Color de fondo (o ruta a imagen)
+  # adaptive_icon_foreground: "assets/gestib_icon_foreground.png" # Imagen de primer plano (necesita transparencia)
