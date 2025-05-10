@@ -3,6 +3,7 @@ import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:timezone/timezone.dart' as tz;
 import 'package:timezone/data/latest_all.dart' as tz_data;
 import 'package:flutter/foundation.dart'; // Para kDebugMode
+// import 'package:flutter_native_timezone_updated_gradle/flutter_native_timezone.dart'; // Opción para zona horaria
 
 class NotificationService {
   static final NotificationService _notificationService = NotificationService._internal();
@@ -17,18 +18,27 @@ class NotificationService {
       FlutterLocalNotificationsPlugin();
 
   Future<void> init() async {
-    // Inicializar datos de zona horaria
     tz_data.initializeTimeZones();
-    // Obtener la zona horaria local
-    // tz.setLocalLocation(tz.getLocation(await FlutterNativeTimezone.getLocalTimezone())); // Alternativa si es necesario
+    // Determinar la zona horaria local de forma segura.
+    // Si usas flutter_native_timezone, descomenta y ajusta:
+    // try {
+    //   final String? currentTimeZone = await FlutterNativeTimezone.getLocalTimezone();
+    //   if (currentTimeZone != null && currentTimeZone.isNotEmpty) {
+    //     tz.setLocalLocation(tz.getLocation(currentTimeZone));
+    //      if (kDebugMode) print('Zona horaria establecida a: $currentTimeZone');
+    //   } else {
+    //      if (kDebugMode) print('No se pudo obtener la zona horaria, usando Etc/UTC como fallback.');
+    //      tz.setLocalLocation(tz.getLocation('Etc/UTC')); // Fallback
+    //   }
+    // } catch (e) {
+    //   if (kDebugMode) print('Error obteniendo zona horaria local: $e. Usando Etc/UTC.');
+    //   tz.setLocalLocation(tz.getLocation('Etc/UTC')); // Fallback en caso de error
+    // }
 
-    // Configuración para Android
-    // IMPORTANTE: Cambia 'mipmap/ic_launcher' por el nombre de tu icono de notificación en res/drawable
-    // Por ejemplo, si tu icono es 'ic_stat_notification.png', usa 'ic_stat_notification'
+
     const AndroidInitializationSettings initializationSettingsAndroid =
-        AndroidInitializationSettings('mipmap/ic_launcher'); // <--- CAMBIA ESTO
+        AndroidInitializationSettings('mipmap/ic_launcher'); // Asegúrate que 'ic_launcher' exista en mipmap
 
-    // Configuración para iOS
     const DarwinInitializationSettings initializationSettingsIOS =
         DarwinInitializationSettings(
       requestAlertPermission: true,
@@ -47,7 +57,6 @@ class NotificationService {
       onDidReceiveNotificationResponse: onDidReceiveNotificationResponse,
     );
 
-    // Solicitar permisos en Android 13+
     if (defaultTargetPlatform == TargetPlatform.android) {
       await _requestAndroidPermissions();
     }
@@ -62,118 +71,138 @@ class NotificationService {
       if (kDebugMode) {
         print("Permiso de notificación Android: $granted");
       }
-      // Considerar solicitar permiso de alarma exacta si es necesario en el futuro
+      // No solicitaremos el permiso SCHEDULE_EXACT_ALARM por ahora para simplificar.
+      // Si se necesitara exactitud crítica, se habilitaría esta parte y se manejaría el permiso:
       // final bool? exactAlarmGranted = await androidImplementation.requestExactAlarmsPermission();
-      // print("Permiso de alarma exacta Android: $exactAlarmGranted");
+      // if (kDebugMode) {
+      //   print("Permiso de alarma exacta Android: $exactAlarmGranted");
+      // }
     }
   }
 
 
   static void onDidReceiveLocalNotification(
       int id, String? title, String? body, String? payload) async {
-    // Manejar notificación recibida mientras la app está en primer plano en iOS < 10
     if (kDebugMode) {
       print('iOS < 10 onDidReceiveLocalNotification: id $id, title $title, body $body, payload $payload');
     }
   }
 
   static void onDidReceiveNotificationResponse(NotificationResponse notificationResponse) {
-    // Manejar cuando el usuario toca la notificación
     if (kDebugMode) {
       print('onDidReceiveNotificationResponse: payload ${notificationResponse.payload}');
     }
-    // Aquí podrías navegar a una pantalla específica si el payload lo indica
   }
 
   Future<void> scheduleWeeklyPregnancyNotification({
     required DateTime lmpDate,
-    required int gestationalWeek, // La semana que está comenzando
+    required int gestationalWeek, // La semana que está comenzando para la cual se notifica
   }) async {
-    await cancelAllNotifications(); // Cancelar anteriores antes de programar nuevas
+    await cancelAllNotifications();
 
-    if (gestationalWeek >= 42) { // No programar más allá de la semana 42 (o un límite razonable)
+    if (gestationalWeek >= 42) { // No programar más allá de la semana 41 (info hasta la 42)
         if (kDebugMode) print("Semana gestacional ($gestationalWeek) demasiado avanzada para notificar.");
         return;
     }
 
-    // Calcular la fecha de inicio de la próxima semana gestacional
-    // LMP + (semana_actual * 7 días) = inicio de la semana actual
-    // Próxima notificación: LMP + (semana_objetivo_notificacion * 7 días)
-    // La notificación es PARA la semana `gestationalWeek`, entonces se dispara al inicio de esa semana.
-    // Si la semana actual es `currentCalculatedWeek`, y queremos notificar para `gestationalWeek`,
-    // la fecha de disparo es LMP + (gestationalWeek * 7) días.
-
-    DateTime notificationDateTime = lmpDate.add(Duration(days: gestationalWeek * 7));
+    // La notificación es PARA la semana `gestationalWeek`, se dispara al inicio de esa semana.
+    DateTime notificationFireDate = lmpDate.add(Duration(days: gestationalWeek * 7));
 
     // Configurar la hora de la notificación (ej. 9 AM)
     DateTime scheduledFireDateTime = DateTime(
-      notificationDateTime.year,
-      notificationDateTime.month,
-      notificationDateTime.day,
+      notificationFireDate.year,
+      notificationFireDate.month,
+      notificationFireDate.day,
       9, // 9 AM
       0, // 00 minutes
     );
 
-    // Si la fecha calculada ya pasó para esta semana, programar para la siguiente semana que cumpla.
     final now = DateTime.now();
+    int targetWeekForNotificationMessage = gestationalWeek; // Semana para el mensaje
+
+    // Si la fecha calculada ya pasó para esta semana, o es hoy pero la hora ya pasó,
+    // programar para el inicio de la siguiente semana gestacional.
     if (scheduledFireDateTime.isBefore(now)) {
-        if (kDebugMode) print("Fecha de notificación para semana $gestationalWeek ($scheduledFireDateTime) ya pasó. Intentando semana ${gestationalWeek + 1}.");
-        // Intentamos para la siguiente semana si la actual ya pasó o es hoy pero la hora ya pasó.
-        // Esto es para asegurar que si el usuario abre la app a mitad de semana,
-        // la notificación se programe para el inicio de la *próxima* nueva semana.
-        scheduledFireDateTime = lmpDate.add(Duration(days: (gestationalWeek + 1) * 7));
+        if (kDebugMode) print("Fecha de notificación para semana $targetWeekForNotificationMessage ($scheduledFireDateTime) ya pasó. Intentando semana ${targetWeekForNotificationMessage + 1}.");
+        
+        targetWeekForNotificationMessage++; // Avanzamos la semana para el mensaje y el cálculo
+        
+        if (targetWeekForNotificationMessage >= 42) {
+           if (kDebugMode) print("Semana gestacional para próxima notificación ($targetWeekForNotificationMessage) demasiado avanzada.");
+           return;
+        }
+
+        notificationFireDate = lmpDate.add(Duration(days: targetWeekForNotificationMessage * 7));
         scheduledFireDateTime = DateTime(
-            scheduledFireDateTime.year,
-            scheduledFireDateTime.month,
-            scheduledFireDateTime.day,
+            notificationFireDate.year,
+            notificationFireDate.month,
+            notificationFireDate.day,
             9,0
         );
-        // Si incluso la siguiente semana está en el pasado (caso improbable si se calcula bien)
+        
+        // Doble chequeo por si acaso el cálculo nos lleva de nuevo al pasado (improbable con lógica correcta)
         if (scheduledFireDateTime.isBefore(now)){
-            if (kDebugMode) print("Siguiente fecha de notificación ($scheduledFireDateTime) también en el pasado. No se programará.");
+            if (kDebugMode) print("Siguiente fecha de notificación para semana $targetWeekForNotificationMessage ($scheduledFireDateTime) también en el pasado. No se programará.");
             return;
         }
-         gestationalWeek++; // Ajustar la semana para el mensaje
-         if (gestationalWeek >= 42) {
-            if (kDebugMode) print("Semana gestacional para próxima notificación ($gestationalWeek) demasiado avanzada.");
-            return;
-         }
     }
 
+    // Es crucial que tz.local se haya configurado correctamente en init() si se depende de la zona horaria local.
+    // Si no, puede que UTC sea usado por defecto por la librería.
+    // Por simplicidad, asumimos que tz.local está configurado o que la conversión es manejada por la librería si no se especifica tz.local.
+    tz.Location location;
+    try {
+        // Si usas flutter_native_timezone, asegúrate que esta lógica esté sincronizada con init.
+        // final String? currentTimeZoneName = await FlutterNativeTimezone.getLocalTimezone();
+        // location = tz.getLocation(currentTimeZoneName ?? 'Etc/UTC');
+        location = tz.local; // Asume que tz.local fue configurado en init() o usa la configuración por defecto de la librería
+    } catch (e) {
+        if (kDebugMode) print("Error obteniendo tz.local, usando 'Etc/UTC': $e");
+        location = tz.getLocation('Etc/UTC');
+    }
 
-    final tz.TZDateTime tzScheduledDate = tz.TZDateTime.from(scheduledFireDateTime, tz.local);
+    final tz.TZDateTime tzScheduledDate = tz.TZDateTime.from(scheduledFireDateTime, location);
 
     if (kDebugMode) {
-      print('Programando notificación para semana $gestationalWeek en: $tzScheduledDate');
+      print('Programando notificación para semana $targetWeekForNotificationMessage en: $tzScheduledDate (Zona Horaria: ${tzScheduledDate.location.name})');
     }
 
-    await flutterLocalNotificationsPlugin.zonedSchedule(
-      0, // ID de la notificación (puedes usar uno por tipo o incremental)
-      '¡Nueva Semana de Embarazo!',
-      'Has entrado en la semana $gestationalWeek de tu embarazo. ¡Descubre las novedades!',
-      tzScheduledDate,
-      NotificationDetails(
-        android: AndroidNotificationDetails(
-          'gestib_pregnancy_channel', // ID del canal
-          'Actualizaciones Semanales de Embarazo', // Nombre del canal
-          channelDescription: 'Notificaciones sobre el progreso semanal del embarazo.',
-          importance: Importance.high,
-          priority: Priority.high,
-          icon: 'mipmap/ic_launcher', // <--- CAMBIA ESTO por tu icono real
-          // sound: RawResourceAndroidNotificationSound('notification_sound'), // Si tienes sonido personalizado
+    try {
+      await flutterLocalNotificationsPlugin.zonedSchedule(
+        0, // ID de la notificación
+        '¡Nueva Semana de Embarazo!',
+        'Has entrado en la semana $targetWeekForNotificationMessage de tu embarazo. ¡Descubre las novedades!',
+        tzScheduledDate,
+        const NotificationDetails(
+          android: AndroidNotificationDetails(
+            'gestib_pregnancy_channel', // ID del canal
+            'Actualizaciones Semanales de Embarazo', // Nombre del canal
+            channelDescription: 'Notificaciones sobre el progreso semanal del embarazo.',
+            importance: Importance.high,
+            priority: Priority.high,
+            icon: 'mipmap/ic_launcher', // CAMBIAR si tienes un icono específico para notificaciones
+          ),
+          iOS: DarwinNotificationDetails(
+            presentAlert: true,
+            presentBadge: true,
+            presentSound: true,
+          ),
         ),
-        iOS: DarwinNotificationDetails(
-          // sound: 'notification_sound.aiff', // Si tienes sonido personalizado
-        ),
-      ),
-      androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle, // Tratar de ser exacto
-      uiLocalNotificationDateInterpretation: UILocalNotificationDateInterpretation.absoluteTime,
-      matchDateTimeComponents: DateTimeComponents.dayOfWeekAndTime, // Repetir semanalmente a esa hora y día de la semana
-      payload: 'semana_$gestationalWeek',
-    );
-     if (kDebugMode) {
-        print("Notificación programada para la semana $gestationalWeek el $tzScheduledDate");
-     }
+        androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle, // CAMBIO A INEXACTO
+        uiLocalNotificationDateInterpretation: UILocalNotificationDateInterpretation.absoluteTime,
+        matchDateTimeComponents: DateTimeComponents.dayOfWeekAndTime, // Repetir semanalmente
+        payload: 'semana_$targetWeekForNotificationMessage',
+      );
+      if (kDebugMode) {
+          print("Notificación programada para la semana $targetWeekForNotificationMessage el $tzScheduledDate");
+      }
+    } catch (e) {
+        if (kDebugMode) {
+            print("Error al programar la notificación: $e");
+            // Si el error es por permisos de alarma exacta, este cambio a inexacto debería prevenirlo.
+            // Si persiste, podría ser otro problema de configuración o permisos.
+        }
+    }
   }
 
 

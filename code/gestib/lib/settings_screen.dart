@@ -3,7 +3,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:flutter/foundation.dart';
+// import 'package:flutter/foundation.dart'; // No se usa kDebugMode aquí
 
 import 'theme_notifier.dart';
 import 'notification_service.dart';
@@ -42,7 +42,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     return Padding(
       padding: const EdgeInsets.fromLTRB(16.0, 24.0, 16.0, 8.0),
       child: Text(
-        themeNotifier.transformText(title), // Aplicar transformación de texto
+        themeNotifier.transformText(title),
         style: Theme.of(context).textTheme.titleSmall?.copyWith(
               color: Theme.of(context).colorScheme.primary,
               fontWeight: FontWeight.bold,
@@ -122,7 +122,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
               },
             ),
           ),
-          // Nueva opción para texto en minúsculas
           SwitchListTile(
             secondary: const Icon(Icons.text_fields_outlined),
             title: Text(themeNotifier.transformText('Todo el texto en minúsculas')),
@@ -170,7 +169,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
           ListTile(
             leading: const Icon(Icons.info_outline_rounded),
             title: Text(themeNotifier.transformText('Versión de la App')),
-            subtitle: Text(themeNotifier.transformText('1.0.2 (gestib)')), // Nombre de app en minúscula
+            subtitle: Text(themeNotifier.transformText('0.9.0 (gestib)')), // VERSIÓN ACTUALIZADA Y NOMBRE EN MINÚSCULA
             onTap: () {},
           ),
           ListTile(
@@ -196,11 +195,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
             },
           ),
           const SizedBox(height: 40),
-          // Aviso de Copyright
           Padding(
             padding: const EdgeInsets.all(16.0),
             child: Text(
-              themeNotifier.transformText('© $currentYear nzrs & gemini 2.5 pro preview 05-06.\nTodos los derechos reservados.'),
+              // CAMBIO A CRÉDITOS
+              themeNotifier.transformText('Créditos:\n$currentYear nzrs & gemini 2.5 pro preview 05-06.\nTodos los derechos reservados.'),
               textAlign: TextAlign.center,
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
                 color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6)

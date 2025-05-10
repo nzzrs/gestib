@@ -1,0 +1,1 @@
+/home/nzrs/Projects/gestib/code/gestib/build/app/intermediates/cxx/Debug/2m106n5n/obj/armeabi-v7a

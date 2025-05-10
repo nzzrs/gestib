@@ -1,0 +1,2 @@
+/home/nzrs/Projects/gestib/code/gestib/android/app/.cxx/RelWithDebInfo/1o43323e/x86_64/CMakeFiles/edit_cache.dir
+/home/nzrs/Projects/gestib/code/gestib/android/app/.cxx/RelWithDebInfo/1o43323e/x86_64/CMakeFiles/rebuild_cache.dir

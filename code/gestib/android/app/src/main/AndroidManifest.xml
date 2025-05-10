@@ -5,8 +5,8 @@
     <uses-permission android:name="android.permission.VIBRATE" />
     <!-- Permiso para ejecutar en segundo plano y recibir notificaciones programadas -->
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED"/>
-    <!-- Si usas alarmas exactas (no lo haremos inicialmente para simplicidad) -->
-    <!-- <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" /> -->
+    <!-- Permiso para alarmas exactas (Android 12+) - Incluido por si se reactiva el modo exacto -->
+    <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />
     <!-- <uses-permission android:name="android.permission.USE_EXACT_ALARM" /> -->
 
 
@@ -38,17 +38,23 @@
             android:value="2" />
 
         <!-- Receptor para reiniciar notificaciones después del reinicio del dispositivo -->
+        <!-- La documentación de flutter_local_notifications sugiere exported="true" para BOOT_COMPLETED -->
         <receiver android:name="com.dexterous.flutterlocalnotifications.ScheduledNotificationBootReceiver"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.BOOT_COMPLETED"/>
                 <action android:name="android.intent.action.MY_PACKAGE_REPLACED"/>
-                <action android:name="android.net.conn.CONNECTIVITY_CHANGE"/>
+                <action android:name="android.net.conn.CONNECTIVITY_CHANGE"/> <!-- Incluido por el plugin -->
+                <action android:name="android.intent.action.TIMEZONE_CHANGED"/> <!-- Incluido por el plugin -->
+                <action android:name="android.intent.action.TIME_SET"/> <!-- Incluido por el plugin -->
             </intent-filter>
         </receiver>
         <!-- Receptor para notificaciones programadas (si no usa el BootReceiver) -->
+        <!-- La documentación de flutter_local_notifications no especifica 'exported' para este,
+             asumimos que el plugin lo maneja. Si hay problemas, se puede añadir explícitamente.
+             Generalmente, si no es invocado por otras apps, 'false' es más seguro. -->
         <receiver android:name="com.dexterous.flutterlocalnotifications.ScheduledNotificationReceiver"
-            android:exported="true"/>
+            android:exported="false"/> <!-- Por defecto, a menos que el plugin requiera true -->
 
     </application>
     <queries>

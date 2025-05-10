@@ -1,0 +1,20 @@
+{
+  "buildFiles": [
+    "/home/nzrs/Packages/flutter/packages/flutter_tools/gradle/src/main/groovy/CMakeLists.txt"
+  ],
+  "cleanCommandsComponents": [
+    [
+      "/home/nzrs/Android/cmake/3.22.1/bin/ninja",
+      "-C",
+      "/home/nzrs/Projects/gestib/code/gestib/android/app/.cxx/RelWithDebInfo/1o43323e/armeabi-v7a",
+      "clean"
+    ]
+  ],
+  "buildTargetsCommandComponents": [
+    "/home/nzrs/Android/cmake/3.22.1/bin/ninja",
+    "-C",
+    "/home/nzrs/Projects/gestib/code/gestib/android/app/.cxx/RelWithDebInfo/1o43323e/armeabi-v7a",
+    "{LIST_OF_TARGETS_TO_BUILD}"
+  ],
+  "libraries": {}
+}

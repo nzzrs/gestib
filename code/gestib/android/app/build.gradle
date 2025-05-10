@@ -5,8 +5,41 @@ plugins {
     id "dev.flutter.flutter-gradle-plugin"
 }
 
+def localProperties = new Properties()
+def localPropertiesFile = rootProject.file('local.properties')
+if (localPropertiesFile.exists()) {
+    localPropertiesFile.withReader('UTF-8') { reader ->
+        localProperties.load(reader)
+    }
+}
+
+def flutterVersionCode = localProperties.getProperty('flutter.versionCode')
+if (flutterVersionCode == null) {
+    flutterVersionCode = '1'
+}
+
+def flutterVersionName = localProperties.getProperty('flutter.versionName')
+if (flutterVersionName == null) {
+    flutterVersionName = '1.0'
+}
+
+// Función para obtener el nombre de la app desde pubspec.yaml
+// Esto es opcional si prefieres hardcodearlo o usar el applicationId
+// def getAppName() {
+//     def pubspecFile = rootProject.file("../pubspec.yaml")
+//     if (pubspecFile.exists()) {
+//         def pubspecContent = pubspecFile.text
+//         def match = pubspecContent =~ /name: (.+)/
+//         if (match) {
+//             return match[0][1].trim()
+//         }
+//     }
+//     return "app" // Fallback
+// }
+// def appName = getAppName()
+
 android {
-    namespace = "com.example.gestib"
+    namespace = "com.example.gestib" // Asegúrate que este sea tu namespace correcto
     compileSdk = flutter.compileSdkVersion
     ndkVersion = flutter.ndkVersion
 
@@ -20,25 +53,54 @@ android {
     }
 
     defaultConfig {
-        // TODO: Specify your own unique Application ID (https://developer.android.com/studio/build/application-id.html).
-        applicationId = "com.example.gestib"
-        // You can update the following values to match your application needs.
-        // For more information, see: https://flutter.dev/to/review-gradle-config.
+        applicationId = "com.example.gestib" // Asegúrate que este sea tu applicationId correcto
         minSdk = flutter.minSdkVersion
         targetSdk = flutter.targetSdkVersion
-        versionCode = flutter.versionCode
-        versionName = flutter.versionName
+        versionCode = flutterVersionCode.toInteger()
+        versionName = flutterVersionName
     }
 
     buildTypes {
         release {
-            // TODO: Add your own signing config for the release build.
-            // Signing with the debug keys for now, so `flutter run --release` works.
-            signingConfig = signingConfigs.debug
+            signingConfig = signingConfigs.debug // TODO: Cambia esto por tu configuración de firma de release real
+            // Nueva sección para personalizar el nombre del APK de release
+            applicationVariants.all { variant ->
+                variant.outputs.all { output ->
+                    // Define el nuevo nombre del archivo APK
+                    // Ejemplo: gestib-0.9.0.apk
+                    // Usaremos el versionName que ya tiene la versión del pubspec.yaml
+                    // y el applicationId para obtener el nombre base de la app si no quieres hardcodearlo.
+                    // O puedes hardcodear "gestib" si lo prefieres.
+                    
+                    // Opción 1: Usando parte del applicationId y versionName
+                    // def appIdParts = defaultConfig.applicationId.split("\\.")
+                    // def baseName = appIdParts.length > 1 ? appIdParts[appIdParts.length -1] : "app"
+                    
+                    // Opción 2: Hardcodeando el nombre base "gestib"
+                    def baseName = "gestib"
+
+                    def newApkName = "${baseName}-${defaultConfig.versionName}.apk"
+                    outputFileName = new File(newApkName)
+                }
+            }
         }
+        // Puedes hacer lo mismo para debug si lo deseas, aunque es menos común
+        // debug {
+        //     applicationVariants.all { variant ->
+        //         variant.outputs.all { output ->
+        //             def baseName = "gestib"
+        //             def newApkName = "${baseName}-debug-${defaultConfig.versionName}.apk"
+        //             outputFileName = new File(newApkName)
+        //         }
+        //     }
+        // }
     }
 }
 
 flutter {
     source = "../.."
+}
+
+dependencies {
+    // Tus dependencias de Android pueden ir aquí si las tienes
 }

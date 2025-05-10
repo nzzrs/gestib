@@ -6,11 +6,11 @@ import 'package:shared_preferences/shared_preferences.dart';
 class ThemeNotifier with ChangeNotifier {
   static const String _themeModeKey = 'themeMode';
   static const String _primaryColorIndexKey = 'primaryColorIndex';
-  static const String _textLowercaseKey = 'textLowercase'; // Nueva clave
+  static const String _textLowercaseKey = 'textLowercase';
 
-  ThemeMode _themeMode = ThemeMode.dark; // <--- CAMBIO: Oscuro por defecto
-  MaterialColor _primaryColor = Colors.deepPurple;
-  bool _isTextLowercase = false; // <--- NUEVO: Opción de texto en minúsculas
+  ThemeMode _themeMode = ThemeMode.dark;
+  MaterialColor _primaryColor = Colors.deepPurple; // Púrpura profundo es una opción por defecto
+  bool _isTextLowercase = false;
 
   ThemeNotifier() {
     _loadPreferences();
@@ -18,7 +18,7 @@ class ThemeNotifier with ChangeNotifier {
 
   ThemeMode get themeMode => _themeMode;
   MaterialColor get primaryColor => _primaryColor;
-  bool get isTextLowercase => _isTextLowercase; // <--- NUEVO: Getter
+  bool get isTextLowercase => _isTextLowercase;
 
   final List<MaterialColor> _availablePrimaryColors = [
     Colors.deepPurple, Colors.blue, Colors.green, Colors.pink, Colors.orange,
@@ -41,16 +41,16 @@ class ThemeNotifier with ChangeNotifier {
     if (themeModeString != null) {
       _themeMode = ThemeMode.values.firstWhere(
         (e) => e.toString() == themeModeString,
-        orElse: () => ThemeMode.dark, // Mantener oscuro si hay error al cargar
+        orElse: () => ThemeMode.dark,
       );
-    } // Si es null, se queda con ThemeMode.dark (definido arriba)
+    }
 
     final primaryColorIndex = prefs.getInt(_primaryColorIndexKey);
     if (primaryColorIndex != null && primaryColorIndex >= 0 && primaryColorIndex < _availablePrimaryColors.length) {
       _primaryColor = _availablePrimaryColors[primaryColorIndex];
     }
 
-    _isTextLowercase = prefs.getBool(_textLowercaseKey) ?? false; // <--- NUEVO: Cargar preferencia
+    _isTextLowercase = prefs.getBool(_textLowercaseKey) ?? false;
 
     notifyListeners();
   }
@@ -59,7 +59,7 @@ class ThemeNotifier with ChangeNotifier {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString(_themeModeKey, _themeMode.toString());
     await prefs.setInt(_primaryColorIndexKey, _availablePrimaryColors.indexOf(_primaryColor));
-    await prefs.setBool(_textLowercaseKey, _isTextLowercase); // <--- NUEVO: Guardar preferencia
+    await prefs.setBool(_textLowercaseKey, _isTextLowercase);
   }
 
   void setThemeMode(ThemeMode mode) {
@@ -76,14 +76,13 @@ class ThemeNotifier with ChangeNotifier {
     _savePreferences();
   }
 
-  void setTextLowercase(bool value) { // <--- NUEVO: Setter
+  void setTextLowercase(bool value) {
     if (_isTextLowercase == value) return;
     _isTextLowercase = value;
     notifyListeners();
     _savePreferences();
   }
 
-  // Helper para aplicar transformación de texto si es necesario
   String transformText(String text) {
     return _isTextLowercase ? text.toLowerCase() : text;
   }
