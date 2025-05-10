@@ -1,0 +1,2 @@
+/home/nzrs/Projects/gestib/code/gestib/android/app/.cxx/Debug/4n5p13l1/x86_64/CMakeFiles/edit_cache.dir
+/home/nzrs/Projects/gestib/code/gestib/android/app/.cxx/Debug/4n5p13l1/x86_64/CMakeFiles/rebuild_cache.dir
